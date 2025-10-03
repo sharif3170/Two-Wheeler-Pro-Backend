@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 // Import the SellVehicle model
 const SellVehicle = require('../models/sellVehicle');
+const auth = require('../middleware/auth'); // Add auth middleware import
 
-// Submit a vehicle for selling
-router.post('/submit', async (req, res) => {
+// Submit a vehicle for selling - ADD AUTH MIDDLEWARE
+router.post('/submit', auth, async (req, res) => {
   try {
     console.log('Received request for vehicle submission:', JSON.stringify(req.body, null, 2));
     
@@ -18,12 +19,12 @@ router.post('/submit', async (req, res) => {
       kmDriven, 
       expectedPrice, 
       condition, 
-      description,
-      userId
+      description
+      // Remove userId from destructuring as it will come from auth middleware
     } = req.body;
     
     // Log the extracted values
-    console.log('Extracted form data:', { name, email, phone, vehicleBrand, vehicleModel, year, kmDriven, expectedPrice, condition, description, userId });
+    console.log('Extracted form data:', { name, email, phone, vehicleBrand, vehicleModel, year, kmDriven, expectedPrice, condition, description });
     
     // Validate required fields
     if (!name || !email || !phone || !vehicleBrand || !vehicleModel || !year || !kmDriven || !expectedPrice) {
@@ -105,7 +106,7 @@ router.post('/submit', async (req, res) => {
       expectedPrice,
       condition: condition || 'good',
       description: description || '',
-      userId: userId || null
+      userId: req.user._id // Use userId from authenticated user
     });
     
     console.log('Attempting to save SellVehicle document');
@@ -127,8 +128,8 @@ router.post('/submit', async (req, res) => {
   }
 });
 
-// Get all vehicle submissions (admin only)
-router.get('/all', async (req, res) => {
+// Get all vehicle submissions (admin only) - KEEP AUTH MIDDLEWARE
+router.get('/all', auth, async (req, res) => {
   try {
     const sellVehicles = await SellVehicle.find().sort({ createdAt: -1 });
     
@@ -146,7 +147,7 @@ router.get('/all', async (req, res) => {
   }
 });
 
-// Get vehicle submission by ID
+// Get vehicle submission by ID - REMOVE AUTH MIDDLEWARE to allow public viewing
 router.get('/:id', async (req, res) => {
   try {
     const sellVehicle = await SellVehicle.findById(req.params.id);
@@ -172,10 +173,18 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Get vehicle submissions by user ID
-router.get('/user/:userId', async (req, res) => {
+// Get vehicle submissions by user ID - KEEP AUTH MIDDLEWARE
+router.get('/user/:userId', auth, async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // Ensure user can only access their own submissions
+    if (userId !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
     
     const sellVehicles = await SellVehicle.find({ userId }).sort({ createdAt: -1 });
     
@@ -193,10 +202,18 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
-// Get sold vehicles by user ID
-router.get('/user/:userId/sold', async (req, res) => {
+// Get sold vehicles by user ID - KEEP AUTH MIDDLEWARE
+router.get('/user/:userId/sold', auth, async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // Ensure user can only access their own submissions
+    if (userId !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
     
     const soldVehicles = await SellVehicle.find({ userId, status: 'sold' }).sort({ createdAt: -1 });
     
@@ -214,8 +231,8 @@ router.get('/user/:userId/sold', async (req, res) => {
   }
 });
 
-// Update vehicle submission status
-router.put('/:id/status', async (req, res) => {
+// Update vehicle submission status - KEEP AUTH MIDDLEWARE
+router.put('/:id/status', auth, async (req, res) => {
   try {
     const { status } = req.body;
     
@@ -256,8 +273,8 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
-// Delete vehicle submission
-router.delete('/:id', async (req, res) => {
+// Delete vehicle submission - KEEP AUTH MIDDLEWARE
+router.delete('/:id', auth, async (req, res) => {
   try {
     const sellVehicle = await SellVehicle.findByIdAndDelete(req.params.id);
     

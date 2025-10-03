@@ -25,7 +25,10 @@ const corsOptions = {
       'http://localhost:3000',  // React default development server
       'http://localhost:5173',  // Vite default development server
       'http://127.0.0.1:3000',  // Alternative localhost
-      'http://127.0.0.1:5173',  // Alternative localhost for Vite
+      'http://127.0.0.1:5173'//,
+      //'https://two-wheeler-pro-backend.onrender.com',
+     // 'https://two-wheeler-pro.vercel.app'// Deployed backend
+      // Alternative localhost for Vite
       // Add your production domain here when ready
       // 'https://yourdomain.com'
     ];
@@ -39,6 +42,7 @@ const corsOptions = {
   credentials: true,  // Enable credentials (cookies, authorization headers, etc.)
   optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
 };
+
 
 app.use(cors(corsOptions));
 
@@ -54,10 +58,7 @@ app.use('/api/favorites', favoriteRoutes);
 app.use('/api/sell-vehicle', sellVehicleRoutes);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(process.env.MONGO_URI, {})
 .then(() => console.log('MongoDB connected'))
 .catch(err => {
   console.error('MongoDB connection error:', err);
@@ -73,20 +74,6 @@ const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
 
-// Handle unhandled promise rejections
-process.on('unhandledRejection', (err, promise) => {
-  console.error('Unhandled Promise Rejection:', err);
-  // Close server & exit process
-  server.close(() => {
-    process.exit(1);
-  });
-});
+
 
 // Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught Exception:', err);
-  // Close server & exit process
-  server.close(() => {
-    process.exit(1);
-  });
-});

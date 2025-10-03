@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const TestRide = require('../models/TestRide');
+const auth = require('../middleware/auth'); // Add auth middleware import
 
-// Book a test ride
-router.post('/book', async (req, res) => {
+// Book a test ride - ADD AUTH MIDDLEWARE
+router.post('/book', auth, async (req, res) => {
   try {
-    const { name, email, phone, vehicleId, date, time, showroom, userId } = req.body;
+    const { name, email, phone, vehicleId, date, time, showroom } = req.body;
     
     // Validate required fields
     if (!name || !email || !phone || !vehicleId || !date || !time || !showroom) {
@@ -41,7 +42,7 @@ router.post('/book', async (req, res) => {
       date: new Date(date),
       time,
       showroom,
-      userId: userId || null
+      userId: req.user._id // Use userId from authenticated user
     });
     
     await testRide.save();
@@ -61,8 +62,8 @@ router.post('/book', async (req, res) => {
   }
 });
 
-// Get all test rides (admin only)
-router.get('/all', async (req, res) => {
+// Get all test rides (admin only) - KEEP AUTH MIDDLEWARE
+router.get('/all', auth, async (req, res) => {
   try {
     const testRides = await TestRide.find().sort({ createdAt: -1 });
     
@@ -80,10 +81,18 @@ router.get('/all', async (req, res) => {
   }
 });
 
-// Get test rides by user ID
-router.get('/user/:userId', async (req, res) => {
+// Get test rides by user ID - KEEP AUTH MIDDLEWARE
+router.get('/user/:userId', auth, async (req, res) => {
   try {
     const { userId } = req.params;
+    
+    // Ensure user can only access their own test rides
+    if (userId !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied'
+      });
+    }
     
     const testRides = await TestRide.find({ userId }).sort({ createdAt: -1 });
     
@@ -101,7 +110,7 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
-// Get test ride by ID
+// Get test ride by ID - REMOVE AUTH MIDDLEWARE to allow public viewing
 router.get('/:id', async (req, res) => {
   try {
     const testRide = await TestRide.findById(req.params.id);
@@ -127,8 +136,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Update test ride status
-router.put('/:id/status', async (req, res) => {
+// Update test ride status - KEEP AUTH MIDDLEWARE
+router.put('/:id/status', auth, async (req, res) => {
   try {
     const { status } = req.body;
     
@@ -169,8 +178,8 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
-// Cancel test ride
-router.delete('/:id', async (req, res) => {
+// Cancel test ride - KEEP AUTH MIDDLEWARE
+router.delete('/:id', auth, async (req, res) => {
   try {
     const testRide = await TestRide.findByIdAndUpdate(
       req.params.id,
