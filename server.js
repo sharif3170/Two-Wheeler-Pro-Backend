@@ -25,9 +25,9 @@ const corsOptions = {
       'http://localhost:3000',  // React default development server
       'http://localhost:5173',  // Vite default development server
       'http://127.0.0.1:3000',  // Alternative localhost
-      'http://127.0.0.1:5173'//,
-      //'https://two-wheeler-pro-backend.onrender.com',
-     // 'https://two-wheeler-pro.vercel.app'// Deployed backend
+      'http://127.0.0.1:5173',
+      'https://two-wheeler-pro-backend.onrender.com',
+      'https://two-wheeler-pro.vercel.app'// Deployed backend
       // Alternative localhost for Vite
       // Add your production domain here when ready
       // 'https://yourdomain.com'
